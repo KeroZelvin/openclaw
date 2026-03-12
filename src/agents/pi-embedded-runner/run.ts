@@ -380,6 +380,7 @@ export async function runEmbeddedPiAgent(
         provider,
         modelId,
         modelContextWindow: model.contextWindow,
+        contextTokensOverride: params.contextTokensOverride,
         defaultTokens: DEFAULT_CONTEXT_TOKENS,
       });
       // Apply contextTokens cap to model so pi-coding-agent's auto-compaction

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { resolveBootstrapWarningSignaturesSeen } from "../../agents/bootstrap-budget.js";
 import { runCliAgent } from "../../agents/cli-runner.js";
 import { getCliSessionId } from "../../agents/cli-session.js";
+import { resolveThinkingContextTokensOverride } from "../../agents/context.js";
 import { runWithModelFallback } from "../../agents/model-fallback.js";
 import { isCliProvider } from "../../agents/model-selection.js";
 import {
@@ -323,6 +324,12 @@ export async function runAgentTurnWithFallback(params: {
             allowTransientCooldownProbe: runOptions?.allowTransientCooldownProbe,
           });
           return (async () => {
+            const contextTokensOverride = resolveThinkingContextTokensOverride({
+              cfg: params.followupRun.run.config,
+              provider,
+              model,
+              thinkLevel: params.followupRun.run.thinkLevel,
+            });
             const result = await runEmbeddedPiAgent({
               ...embeddedContext,
               trigger: params.isHeartbeat ? "heartbeat" : "user",
@@ -332,6 +339,7 @@ export async function runAgentTurnWithFallback(params: {
               groupSpace: params.sessionCtx.GroupSpace?.trim() ?? undefined,
               ...senderContext,
               ...runBaseParams,
+              contextTokensOverride,
               prompt: params.commandBody,
               extraSystemPrompt: params.followupRun.run.extraSystemPrompt,
               toolResultFormat: (() => {

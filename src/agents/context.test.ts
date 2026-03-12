@@ -3,6 +3,7 @@ import {
   ANTHROPIC_CONTEXT_1M_TOKENS,
   applyConfiguredContextWindows,
   applyDiscoveredContextWindows,
+  resolveThinkingContextTokensOverride,
   resolveContextTokensForModel,
 } from "./context.js";
 import { createSessionManagerRuntimeRegistry } from "./pi-extensions/session-manager-runtime-registry.js";
@@ -188,6 +189,52 @@ describe("resolveContextTokensForModel", () => {
       provider: "anthropic",
       model: "claude-haiku-3-5",
       fallbackContextTokens: 200_000,
+    });
+
+    expect(result).toBe(200_000);
+  });
+});
+
+describe("resolveThinkingContextTokensOverride", () => {
+  it("uses native model context when thinking is xhigh", () => {
+    const result = resolveThinkingContextTokensOverride({
+      cfg: {
+        models: {
+          providers: {
+            "qwen-api": {
+              baseUrl: "http://localhost",
+              apiKey: "test-key",
+              api: "openai-completions",
+              models: [
+                {
+                  id: "qwen3.5-plus",
+                  name: "Qwen 3.5 Plus",
+                  reasoning: true,
+                  input: ["text"],
+                  cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+                  contextWindow: 1_000_000,
+                  maxTokens: 32_768,
+                },
+              ],
+            },
+          },
+        },
+      },
+      provider: "qwen-api",
+      model: "qwen3.5-plus",
+      thinkLevel: "xhigh",
+      configuredContextTokens: 200_000,
+      fallbackContextTokens: 200_000,
+    });
+
+    expect(result).toBe(1_000_000);
+  });
+
+  it("keeps the configured cap below xhigh", () => {
+    const result = resolveThinkingContextTokensOverride({
+      thinkLevel: "high",
+      configuredContextTokens: 200_000,
+      fallbackContextTokens: 1_000_000,
     });
 
     expect(result).toBe(200_000);
