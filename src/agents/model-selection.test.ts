@@ -784,6 +784,31 @@ describe("model-selection", () => {
       expect(resolveAnthropicOpusThinking(cfg)).toBe("adaptive");
     });
 
+    it("prefers per-agent thinkingDefault over global thinkingDefault", () => {
+      const cfg = {
+        agents: {
+          defaults: {
+            thinkingDefault: "medium",
+          },
+          list: [
+            {
+              id: "codex",
+              thinkingDefault: "xhigh",
+            },
+          ],
+        },
+      } as OpenClawConfig;
+
+      expect(
+        resolveThinkingDefault({
+          cfg,
+          provider: "openai-codex",
+          model: "gpt-5.4",
+          agentId: "codex",
+        }),
+      ).toBe("xhigh");
+    });
+
     it("defaults Anthropic Claude 4.6 models to adaptive", () => {
       const cfg = {} as OpenClawConfig;
 

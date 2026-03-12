@@ -2,6 +2,13 @@ import crypto from "node:crypto";
 import { resolveSessionAuthProfileOverride } from "../../agents/auth-profiles/session-override.js";
 import type { ExecToolDefaults } from "../../agents/bash-tools.js";
 import { resolveFastModeState } from "../../agents/fast-mode.js";
+import { resolveThinkingContextTokensOverride } from "../../agents/context.js";
+import {
+  abortEmbeddedPiRun,
+  isEmbeddedPiRunActive,
+  isEmbeddedPiRunStreaming,
+  resolveEmbeddedSessionLane,
+} from "../../agents/pi-embedded.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import { resolveGroupSessionKey } from "../../config/sessions/group.js";
 import {
@@ -594,7 +601,13 @@ export async function runPreparedReply(
     sessionKey,
     storePath,
     defaultModel,
-    agentCfgContextTokens: agentCfg?.contextTokens,
+    agentCfgContextTokens: resolveThinkingContextTokensOverride({
+      cfg,
+      provider,
+      model,
+      thinkLevel: resolvedThinkLevel,
+      configuredContextTokens: agentCfg?.contextTokens,
+    }),
     resolvedVerboseLevel: resolvedVerboseLevel ?? "off",
     isNewSession,
     blockStreamingEnabled,

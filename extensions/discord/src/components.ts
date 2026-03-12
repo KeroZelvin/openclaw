@@ -153,6 +153,8 @@ export type DiscordModalSpec = {
 export type DiscordComponentMessageSpec = {
   text?: string;
   reusable?: boolean;
+  /** Optional component registry TTL in milliseconds. Defaults to registry default when omitted. */
+  ttlMs?: number;
   container?: {
     accentColor?: string | number;
     spoiler?: boolean;
@@ -579,6 +581,10 @@ export function readDiscordComponentSpec(raw: unknown): DiscordComponentMessageS
     : undefined;
   const modalRaw = obj.modal;
   const reusable = typeof obj.reusable === "boolean" ? obj.reusable : undefined;
+  const ttlMs =
+    typeof obj.ttlMs === "number" && Number.isFinite(obj.ttlMs) && obj.ttlMs > 0
+      ? Math.floor(obj.ttlMs)
+      : undefined;
   let modal: DiscordModalSpec | undefined;
   if (modalRaw !== undefined) {
     const modalObj = requireObject(modalRaw, "components.modal");
@@ -604,6 +610,7 @@ export function readDiscordComponentSpec(raw: unknown): DiscordComponentMessageS
   return {
     text: readOptionalString(obj.text),
     reusable,
+    ttlMs,
     container:
       typeof obj.container === "object" && obj.container && !Array.isArray(obj.container)
         ? {

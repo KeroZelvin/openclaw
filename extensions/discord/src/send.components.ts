@@ -173,6 +173,7 @@ export async function sendDiscordComponentMessage(
   registerBuiltDiscordComponentMessage({
     buildResult,
     messageId: result.id,
+    ttlMs: spec.ttlMs,
   });
 
   recordChannelActivity({

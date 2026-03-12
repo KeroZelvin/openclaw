@@ -4,6 +4,7 @@ import { resolveSendableOutboundReplyParts } from "openclaw/plugin-sdk/reply-pay
 import { resolveBootstrapWarningSignaturesSeen } from "../../agents/bootstrap-budget.js";
 import { runCliAgent } from "../../agents/cli-runner.js";
 import { getCliSessionId } from "../../agents/cli-session.js";
+import { resolveThinkingContextTokensOverride } from "../../agents/context.js";
 import { runWithModelFallback } from "../../agents/model-fallback.js";
 import { isCliProvider } from "../../agents/model-selection.js";
 import {
@@ -338,6 +339,12 @@ export async function runAgentTurnWithFallback(params: {
             },
           );
           return (async () => {
+            const contextTokensOverride = resolveThinkingContextTokensOverride({
+              cfg: params.followupRun.run.config,
+              provider,
+              model,
+              thinkLevel: params.followupRun.run.thinkLevel,
+            });
             let attemptCompactionCount = 0;
             try {
               const result = await runEmbeddedPiAgent({
@@ -350,6 +357,7 @@ export async function runAgentTurnWithFallback(params: {
                 groupSpace: params.sessionCtx.GroupSpace?.trim() ?? undefined,
                 ...senderContext,
                 ...runBaseParams,
+                contextTokensOverride,
                 prompt: params.commandBody,
                 extraSystemPrompt: params.followupRun.run.extraSystemPrompt,
                 toolResultFormat: (() => {

@@ -102,6 +102,23 @@ describe("context-window-guard", () => {
     expect(guard.shouldBlock).toBe(false);
   });
 
+  it("prefers explicit context override over config cap", () => {
+    const cfg = {
+      agents: { defaults: { contextTokens: 200_000 } },
+    } satisfies OpenClawConfig;
+    const info = resolveContextWindowInfo({
+      cfg,
+      provider: "qwen-api",
+      modelId: "qwen3.5-plus",
+      modelContextWindow: 1_000_000,
+      contextTokensOverride: 1_000_000,
+      defaultTokens: 200_000,
+    });
+
+    expect(info.source).toBe("model");
+    expect(info.tokens).toBe(1_000_000);
+  });
+
   it("does not override when cap exceeds base window", () => {
     const cfg = {
       agents: { defaults: { contextTokens: 128_000 } },

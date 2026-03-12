@@ -234,6 +234,8 @@ export const FIELD_HELP: Record<string, string> = {
     "Optional ACP session mode default for this agent (persistent or oneshot).",
   "agents.list[].runtime.acp.cwd":
     "Optional default working directory for this agent's ACP sessions.",
+  "agents.list[].thinkingDefault":
+    "Optional per-agent default thinking level. This overrides agents.defaults.thinkingDefault for that agent, but explicit per-model params.thinking and per-session/directive overrides still take precedence.",
   "agents.list[].identity.avatar":
     "Avatar image path (relative to the agent workspace only) or a remote URL/data URL.",
   "agents.defaults.heartbeat.suppressToolErrorWarnings":

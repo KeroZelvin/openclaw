@@ -146,6 +146,7 @@ export type CompactEmbeddedPiSessionParams = {
   skillsSnapshot?: SkillSnapshot;
   provider?: string;
   model?: string;
+  contextTokensOverride?: number;
   thinkLevel?: ThinkLevel;
   reasoningLevel?: ReasoningLevel;
   bashElevated?: ExecElevatedDefaults;
@@ -779,6 +780,7 @@ export async function compactEmbeddedPiSessionDirect(
       provider,
       modelId,
       modelContextWindow: runtimeModel.contextWindow,
+      contextTokensOverride: params.contextTokensOverride,
       defaultTokens: DEFAULT_CONTEXT_TOKENS,
     });
     const effectiveModel = applyLocalNoAuthHeaderOverride(

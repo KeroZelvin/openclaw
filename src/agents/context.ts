@@ -457,3 +457,40 @@ export function resolveContextTokensForModel(params: {
 
   return params.fallbackContextTokens;
 }
+
+export function resolveThinkingContextTokensOverride(params: {
+  cfg?: OpenClawConfig;
+  provider?: string;
+  model?: string;
+  thinkLevel?: string;
+  configuredContextTokens?: number;
+  fallbackContextTokens?: number;
+}): number | undefined {
+  if (params.thinkLevel === "xhigh") {
+    const configuredWindow = (() => {
+      const provider = params.provider?.trim();
+      const model = params.model?.trim();
+      if (!provider || !model) {
+        return undefined;
+      }
+      const providers = params.cfg?.models?.providers as
+        | Record<string, { models?: Array<{ id?: string; contextWindow?: number }> }>
+        | undefined;
+      const configured = providers?.[provider]?.models?.find(
+        (entry) => entry?.id === model,
+      )?.contextWindow;
+      return typeof configured === "number" && configured > 0 ? Math.floor(configured) : undefined;
+    })();
+    if (configuredWindow) {
+      return configuredWindow;
+    }
+    return resolveContextTokensForModel({
+      cfg: params.cfg,
+      provider: params.provider,
+      model: params.model,
+      fallbackContextTokens: params.fallbackContextTokens,
+    });
+  }
+  const configured = params.configuredContextTokens;
+  return typeof configured === "number" && configured > 0 ? configured : undefined;
+}
