@@ -972,6 +972,7 @@ export const chatHandlers: GatewayRequestHandlers = {
         provider,
         model,
         catalog,
+        agentId: sessionAgentId,
       });
     }
     const verboseLevel = entry?.verboseLevel ?? cfg.agents?.defaults?.verboseDefault;

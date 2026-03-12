@@ -63,6 +63,7 @@ export const FIELD_LABELS: Record<string, string> = {
   "agents.list[].runtime.acp.backend": "Agent ACP Backend",
   "agents.list[].runtime.acp.mode": "Agent ACP Mode",
   "agents.list[].runtime.acp.cwd": "Agent ACP Working Directory",
+  "agents.list[].thinkingDefault": "Agent Default Thinking",
   agents: "Agents",
   "agents.defaults": "Agent Defaults",
   "agents.list": "Agent List",

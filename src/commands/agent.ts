@@ -20,6 +20,7 @@ import { clearSessionAuthProfileOverride } from "../agents/auth-profiles/session
 import { resolveBootstrapWarningSignaturesSeen } from "../agents/bootstrap-budget.js";
 import { runCliAgent } from "../agents/cli-runner.js";
 import { getCliSessionId, setCliSessionId } from "../agents/cli-session.js";
+import { resolveThinkingContextTokensOverride } from "../agents/context.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../agents/defaults.js";
 import { FailoverError } from "../agents/failover-error.js";
 import { formatAgentInternalEventsForPrompt } from "../agents/internal-events.js";
@@ -482,6 +483,13 @@ function runAgentAttempt(params: {
     clientTools: params.opts.clientTools,
     provider: params.providerOverride,
     model: params.modelOverride,
+    contextTokensOverride: resolveThinkingContextTokensOverride({
+      cfg: params.cfg,
+      provider: params.providerOverride,
+      model: params.modelOverride,
+      thinkLevel: params.resolvedThinkLevel,
+      configuredContextTokens: params.cfg.agents?.defaults?.contextTokens,
+    }),
     authProfileId,
     authProfileIdSource: authProfileId ? params.sessionEntry?.authProfileOverrideSource : undefined,
     thinkLevel: params.resolvedThinkLevel,
@@ -1030,6 +1038,7 @@ async function agentCommandInternal(
         provider,
         model,
         catalog: catalogForThinking,
+        agentId: sessionAgentId,
       });
     }
     if (resolvedThinkLevel === "xhigh" && !supportsXHighThinking(provider, model)) {
@@ -1189,7 +1198,13 @@ async function agentCommandInternal(
     if (sessionStore && sessionKey) {
       await updateSessionStoreAfterAgentRun({
         cfg,
-        contextTokensOverride: agentCfg?.contextTokens,
+        contextTokensOverride: resolveThinkingContextTokensOverride({
+          cfg,
+          provider,
+          model,
+          thinkLevel: resolvedThinkLevel,
+          configuredContextTokens: agentCfg?.contextTokens,
+        }),
         sessionId,
         sessionKey,
         storePath,

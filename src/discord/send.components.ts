@@ -143,6 +143,7 @@ export async function sendDiscordComponentMessage(
     entries: buildResult.entries,
     modals: buildResult.modals,
     messageId: result.id,
+    ttlMs: spec.ttlMs,
   });
 
   recordChannelActivity({

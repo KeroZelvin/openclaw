@@ -1,3 +1,4 @@
+import { resolveSessionAgentId } from "../../agents/agent-scope.js";
 import { clearSessionAuthProfileOverride } from "../../agents/auth-profiles/session-override.js";
 import { lookupContextTokens } from "../../agents/context.js";
 import { DEFAULT_CONTEXT_TOKENS } from "../../agents/defaults.js";
@@ -396,9 +397,9 @@ export async function createModelSelectionState(params: {
       provider,
       model,
       catalog: catalogForThinking,
+      agentId: resolveSessionAgentId({ sessionKey, config: cfg }),
     });
-    defaultThinkingLevel =
-      resolved ?? (agentCfg?.thinkingDefault as ThinkLevel | undefined) ?? "off";
+    defaultThinkingLevel = resolved ?? "off";
     return defaultThinkingLevel;
   };
 
