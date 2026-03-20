@@ -127,11 +127,17 @@ function shouldAttachDeviceIdentityForGatewayCall(params: {
   token?: string;
   password?: string;
 }): boolean {
-  void params;
-  // Shared-auth local calls used to skip device identity as an optimization, but
-  // device-less operator connects now have their self-declared scopes stripped.
-  // Keep identity enabled so local authenticated calls stay device-bound and
-  // retain their least-privilege scopes.
+  try {
+    const parsed = new URL(params.url);
+    if (["127.0.0.1", "::1", "localhost"].includes(parsed.hostname)) {
+      // Local loopback is still a trusted self-connection. Keep the signed
+      // device identity attached so least-privilege operator scopes keep
+      // working under shared-token auth hardening.
+      return true;
+    }
+  } catch {
+    return true;
+  }
   return true;
 }
 
@@ -165,17 +171,21 @@ export function ensureExplicitGatewayAuth(params: {
   // Never allow an override to silently reuse implicit credentials or device token fallback.
   const explicitToken = params.explicitAuth?.token;
   const explicitPassword = params.explicitAuth?.password;
+  const envToken =
+    trimToUndefined(process.env.OPENCLAW_GATEWAY_TOKEN) ??
+    trimToUndefined(process.env.CLAWDBOT_GATEWAY_TOKEN);
+  const envPassword =
+    trimToUndefined(process.env.OPENCLAW_GATEWAY_PASSWORD) ??
+    trimToUndefined(process.env.CLAWDBOT_GATEWAY_PASSWORD);
   if (params.urlOverrideSource === "cli" && (explicitToken || explicitPassword)) {
     return;
   }
-  const hasResolvedAuth =
-    params.resolvedAuth?.token ||
-    params.resolvedAuth?.password ||
-    explicitToken ||
-    explicitPassword;
   // Env overrides are supported for deployment ergonomics, but only when explicit auth is available.
   // This avoids implicit device-token fallback against attacker-controlled WSS endpoints.
-  if (params.urlOverrideSource === "env" && hasResolvedAuth) {
+  if (
+    params.urlOverrideSource === "env" &&
+    (explicitToken || explicitPassword || envToken || envPassword)
+  ) {
     return;
   }
   const message = [

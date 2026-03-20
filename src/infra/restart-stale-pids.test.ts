@@ -202,6 +202,26 @@ describe.skipIf(isWindows)("restart-stale-pids", () => {
     });
   });
 
+  describe("shouldCleanStaleGatewayProcessesForCurrentProcess", () => {
+    it("returns true when SYSTEMD_EXEC_PID matches the current process", () => {
+      expect(
+        __testing.shouldCleanStaleGatewayProcessesForCurrentProcess({
+          OPENCLAW_SERVICE_MARKER: "openclaw",
+          SYSTEMD_EXEC_PID: String(process.pid),
+        }),
+      ).toBe(true);
+    });
+
+    it("returns false when SYSTEMD_EXEC_PID belongs to a different process", () => {
+      expect(
+        __testing.shouldCleanStaleGatewayProcessesForCurrentProcess({
+          OPENCLAW_SERVICE_MARKER: "openclaw",
+          SYSTEMD_EXEC_PID: String(process.pid + 1),
+        }),
+      ).toBe(false);
+    });
+  });
+
   // -------------------------------------------------------------------------
   // parsePidsFromLsofOutput — pure unit tests (no I/O, driven via spawnSync mock)
   // -------------------------------------------------------------------------

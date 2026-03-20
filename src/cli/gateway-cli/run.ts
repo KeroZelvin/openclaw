@@ -18,7 +18,10 @@ import { setGatewayWsLogStyle } from "../../gateway/ws-logging.js";
 import { setVerbose } from "../../globals.js";
 import { GatewayLockError } from "../../infra/gateway-lock.js";
 import { formatPortDiagnostics, inspectPortUsage } from "../../infra/ports.js";
-import { cleanStaleGatewayProcessesSync } from "../../infra/restart-stale-pids.js";
+import {
+  cleanStaleGatewayProcessesSync,
+  shouldCleanStaleGatewayProcessesForCurrentProcess,
+} from "../../infra/restart-stale-pids.js";
 import { detectRespawnSupervisor } from "../../infra/supervisor-markers.js";
 import { setConsoleSubsystemFilter, setConsoleTimestampPrefix } from "../../logging/console.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
@@ -226,13 +229,15 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
     defaultRuntime.exit(1);
     return;
   }
-  if (process.env.OPENCLAW_SERVICE_MARKER?.trim()) {
+  if (shouldCleanStaleGatewayProcessesForCurrentProcess()) {
     const stale = cleanStaleGatewayProcessesSync(port);
     if (stale.length > 0) {
       gatewayLog.info(
         `service-mode: cleared ${stale.length} stale gateway pid(s) before bind on port ${port}`,
       );
     }
+  } else if (process.env.OPENCLAW_SERVICE_MARKER?.trim()) {
+    gatewayLog.info("service-mode: skipped stale gateway cleanup for non-supervisor child");
   }
   if (opts.force) {
     try {

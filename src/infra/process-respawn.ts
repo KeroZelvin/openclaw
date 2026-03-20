@@ -19,6 +19,16 @@ function isTruthy(value: string | undefined): boolean {
   return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
+function isLinuxServiceManagedGateway(env: NodeJS.ProcessEnv): boolean {
+  if (process.platform !== "linux") {
+    return false;
+  }
+  return (
+    Boolean(env.OPENCLAW_SERVICE_MARKER?.trim()) &&
+    env.OPENCLAW_SERVICE_KIND?.trim().toLowerCase() === "gateway"
+  );
+}
+
 /**
  * Attempt to restart this process with a fresh PID.
  * - supervised environments (launchd/systemd/schtasks): caller should exit and let supervisor restart
@@ -28,6 +38,9 @@ function isTruthy(value: string | undefined): boolean {
 export function restartGatewayProcessWithFreshPid(): GatewayRespawnResult {
   if (isTruthy(process.env.OPENCLAW_NO_RESPAWN)) {
     return { mode: "disabled" };
+  }
+  if (isLinuxServiceManagedGateway(process.env)) {
+    return { mode: "supervised", detail: "linux service marker" };
   }
   const supervisor = detectRespawnSupervisor(process.env);
   if (supervisor) {

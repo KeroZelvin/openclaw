@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import fs from "node:fs";
 import { resolveGatewayPort } from "../config/paths.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { resolveLsofCommandSync } from "./ports-lsof.js";
@@ -115,6 +116,85 @@ export function findGatewayPidsOnPortSync(
     return [];
   }
   return parsePidsFromLsofOutput(res.stdout);
+}
+
+function readLinuxProcessCommSync(pid: number): string | null {
+  if (!Number.isFinite(pid) || pid <= 0) {
+    return null;
+  }
+  try {
+    const raw = fs.readFileSync(`/proc/${Math.floor(pid)}/comm`, "utf8");
+    const trimmed = raw.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
+
+function readLinuxParentCommSync(pid: number): string | null {
+  const parsedPid = Math.floor(pid);
+  if (!Number.isFinite(parsedPid) || parsedPid <= 0) {
+    return null;
+  }
+  try {
+    const raw = fs.readFileSync(`/proc/${parsedPid}/stat`, "utf8");
+    const endOfComm = raw.lastIndexOf(")");
+    if (endOfComm < 0 || endOfComm + 2 >= raw.length) {
+      return null;
+    }
+    const fields = raw
+      .slice(endOfComm + 2)
+      .trim()
+      .split(/\s+/);
+    const ppid = Number.parseInt(fields[1] ?? "", 10);
+    if (!Number.isFinite(ppid) || ppid <= 0) {
+      return null;
+    }
+    return readLinuxProcessCommSync(ppid);
+  } catch {
+    return null;
+  }
+}
+
+function parsePositiveInteger(value: string | undefined): number | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const parsed = Number.parseInt(value.trim(), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+  return parsed;
+}
+
+/**
+ * Only the directly service-launched gateway process should perform
+ * service-mode stale PID cleanup. Nested helpers can inherit the service
+ * environment inside the same cgroup; if they also run cleanup they end up
+ * killing the healthy listener they were spawned to talk to.
+ */
+export function shouldCleanStaleGatewayProcessesForCurrentProcess(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (!env.OPENCLAW_SERVICE_MARKER?.trim()) {
+    return false;
+  }
+  if (process.platform !== "linux") {
+    return true;
+  }
+  const systemdExecPid = parsePositiveInteger(env.SYSTEMD_EXEC_PID);
+  if (systemdExecPid !== null) {
+    return systemdExecPid === process.pid;
+  }
+  const parentComm = readLinuxProcessCommSync(process.ppid)?.toLowerCase() ?? "";
+  if (parentComm === "systemd") {
+    return true;
+  }
+  if (parentComm.includes("openclaw")) {
+    const grandparentComm = readLinuxParentCommSync(process.ppid)?.toLowerCase() ?? "";
+    return grandparentComm === "systemd";
+  }
+  return false;
 }
 
 /**
@@ -288,4 +368,7 @@ export const __testing = {
   },
   /** Invoke sleepSync directly (bypasses the override) for unit-testing the real Atomics path. */
   callSleepSyncRaw: sleepSync,
+  readLinuxProcessCommSync,
+  readLinuxParentCommSync,
+  shouldCleanStaleGatewayProcessesForCurrentProcess,
 };

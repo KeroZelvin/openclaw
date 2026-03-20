@@ -10,6 +10,7 @@ import { buildCliRespawnPlan } from "./entry.respawn.js";
 import { isTruthyEnvValue, normalizeEnv } from "./infra/env.js";
 import { isMainModule } from "./infra/is-main.js";
 import { ensureOpenClawExecMarkerOnProcess } from "./infra/openclaw-exec-env.js";
+import { detectRespawnSupervisor } from "./infra/supervisor-markers.js";
 import { installProcessWarningFilter } from "./infra/warning-filter.js";
 import { attachChildProcessBridge } from "./process/child-process-bridge.js";
 
@@ -64,10 +65,12 @@ if (
     process.env.NO_COLOR = "1";
     process.env.FORCE_COLOR = "0";
   }
-
   function ensureCliRespawnReady(): boolean {
     const plan = buildCliRespawnPlan();
     if (!plan) {
+      return false;
+    }
+    if (detectRespawnSupervisor(process.env, process.platform)) {
       return false;
     }
 

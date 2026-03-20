@@ -211,7 +211,7 @@ describe("callGateway url resolution", () => {
     expect(lastClientOptions?.token).toBe("explicit-token");
   });
 
-  it("keeps device identity enabled for local loopback shared-token auth", async () => {
+  it("attaches device identity for local loopback shared-token auth", async () => {
     setLocalLoopbackGatewayConfig();
 
     await callGateway({
@@ -637,8 +637,14 @@ describe("callGateway url override auth requirements", () => {
     envSnapshot = captureEnv([
       "OPENCLAW_GATEWAY_TOKEN",
       "OPENCLAW_GATEWAY_PASSWORD",
+      "CLAWDBOT_GATEWAY_TOKEN",
+      "CLAWDBOT_GATEWAY_PASSWORD",
       "OPENCLAW_GATEWAY_URL",
     ]);
+    delete process.env.OPENCLAW_GATEWAY_TOKEN;
+    delete process.env.OPENCLAW_GATEWAY_PASSWORD;
+    delete process.env.CLAWDBOT_GATEWAY_TOKEN;
+    delete process.env.CLAWDBOT_GATEWAY_PASSWORD;
     resetGatewayCallMocks();
     delete process.env.OPENCLAW_GATEWAY_TOKEN;
     delete process.env.OPENCLAW_GATEWAY_PASSWORD;
