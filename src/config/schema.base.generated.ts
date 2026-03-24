@@ -12094,7 +12094,7 @@ export const GENERATED_BASE_CONFIG_SCHEMA = {
     },
     "agents.list[].thinkingDefault": {
       label: "Agent Thinking Default",
-      help: "Optional per-agent default thinking level. Overrides agents.defaults.thinkingDefault for this agent when no per-message or session override is set.",
+      help: "Optional per-agent default thinking level. This overrides agents.defaults.thinkingDefault for that agent, but explicit per-model params.thinking and per-session/directive overrides still take precedence.",
       tags: ["advanced"],
     },
     "agents.list[].reasoningDefault": {

@@ -58,11 +58,13 @@ type DiscordComponentSendOpts = {
 export function registerBuiltDiscordComponentMessage(params: {
   buildResult: DiscordComponentBuildResult;
   messageId: string;
+  ttlMs?: number;
 }): void {
   registerDiscordComponentEntries({
     entries: params.buildResult.entries,
     modals: params.buildResult.modals,
     messageId: params.messageId,
+    ttlMs: params.ttlMs,
   });
 }
 
